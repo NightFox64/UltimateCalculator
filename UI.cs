@@ -22,6 +22,7 @@ namespace ComplexCalculator
         private TextBox txtInput3;
         private Label lblA, lblB, lblC;
         private Button btnSolve;
+        private Button btnTrig;
 
         public CalculatorForm()
         {
@@ -63,11 +64,16 @@ namespace ComplexCalculator
                 btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
             }
 
+            bool isAngle = (mode == "Углы");
+            btnTrig.Visible = isAngle;
+            // Для углов умножение и деление обычно идет на ЧИСЛО, а не на другой угол.
+            // Но для простоты оставим кнопки активными.
+
             lblResult.Text = "Результат: ";
         }
         private void InitializeComponent()
         {
-            this.Size = new Size(400, 450);
+            this.Size = new Size(400, 550);
 
             // Метка результата
             lblResult = new Label { 
@@ -82,7 +88,7 @@ namespace ComplexCalculator
 
             // Выбор режима
             cmbMode = new ComboBox { Location = new Point(20, 5), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
-            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения"});
+            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы"});
             cmbMode.SelectedIndex = 0; // По умолчанию первый вариант
             this.Controls.Add(cmbMode);
 
@@ -109,10 +115,11 @@ namespace ComplexCalculator
             btnPower = new Button { Text = "В степень", Location = new Point(20, 310), Width = 85 };
             btnConvert = new Button { Text = "Сменить форму", Location = new Point(110, 310), Width = 100 };
             btnSolve = new Button { Text = "Найти корни", Location = new Point(230, 310), Width = 100 };
+            btnTrig = new Button { Text = "Sin/Cos/Tan", Location = new Point(20, 380), Width = 160, Visible = false };
 
             // Кнопки управления
-            btnClear = new Button { Text = "Сброс", Location = new Point(20, 380), Width = 160 };
-            btnShowLog = new Button { Text = "Протокол (Лог)", Location = new Point(190, 380), Width = 160 };
+            btnClear = new Button { Text = "Сброс", Location = new Point(20, 410), Width = 160 };
+            btnShowLog = new Button { Text = "Протокол (Лог)", Location = new Point(190, 410), Width = 160 };
 
             txtPower = new TextBox { Location = new Point(280, 280), Width = 40 };
             Label lblP = new Label { Text = "Степень:", Location = new Point(210, 285), Width = 70 };
@@ -133,6 +140,7 @@ namespace ComplexCalculator
             btnFlip.Click += (s, e) => ExecuteFractionAction("flip");
             btnNegate.Click += (s, e) => ExecuteFractionAction("negate");
             btnSolve.Click += (s, e) => ExecuteOperation("solve");
+            btnTrig.Click += (s, e) => ExecuteOperation("trig");
 
             // ПОДПИСЫВАЕМСЯ НА СОБЫТИЕ СМЕНЫ ВЫБОРА
             cmbMode.SelectedIndexChanged += (s, e) => UpdateUIState();
@@ -160,6 +168,7 @@ namespace ComplexCalculator
             this.Controls.Add(lblC);
             this.Controls.Add(txtInput3);
             this.Controls.Add(btnSolve);
+            this.Controls.Add(btnTrig);
         }
 
         private void ExecuteFractionAction(string action)
@@ -189,6 +198,34 @@ namespace ComplexCalculator
 
                 switch (mode)
                 {
+                    case "Углы":
+                    {
+                        var ang1 = AngleModule.Parse(txtInput1.Text);
+                        if (op == "trig")
+                        {
+                            resultStr = ang1.GetTrig();
+                        }
+                        else
+                        {
+                            // Арифметика
+                            if (op == "+" || op == "-")
+                            {
+                                var ang2 = AngleModule.Parse(txtInput2.Text);
+                                if (op == "+") resultStr = (ang1 + ang2).ToString();
+                                else resultStr = (ang1 - ang2).ToString();
+                            }
+                            else // Умножение/деление угла на число
+                            {
+                                double val = double.Parse(txtInput2.Text);
+                                if (op == "*") resultStr = (ang1 * val).ToString();
+                                else resultStr = (ang1 / val).ToString();
+                            }
+                        }
+                        lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
+                        Logger.Log(txtInput1.Text, op, txtInput2.Text, resultStr);
+                        return;
+                    }
+
                     case "Квадратные уравнения":
                     {
                         if (op == "solve")
@@ -201,9 +238,10 @@ namespace ComplexCalculator
                         }
 
                         lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
+                        Logger.Log(txtInput1.Text, op, txtInput2.Text, resultStr);
                         return;
                     }
-                    
+
                     case "Обыкновенные дроби":
                     {
                         var f1 = CommonFraction.Parse(txtInput1.Text);
