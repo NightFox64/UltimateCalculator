@@ -34,6 +34,8 @@ namespace ComplexCalculator
         private Button btnSolveSystem;
         private ComboBox cmbRootMethod;
         private Button btnFindRoot;
+        private ComboBox cmbTimeUnit; // Выбор: Часы, Минуты, Секунды
+        private Button btnTimeToFull; // Кнопка перевода в формат Ч:М:С
 
         public CalculatorForm()
         {
@@ -163,6 +165,15 @@ namespace ComplexCalculator
                 lblResult.Text = "Пример: x*x - 2 = 0\nИнтервал: 1 2\nТочность: 0,001";
             }
 
+            bool isTime = (mode == "Интервалы времени");
+            cmbTimeUnit.Visible = btnTimeToFull.Visible = isTime;
+
+            if (isTime) {
+                lblResult.Text = "Введите число в поле 1 (и 2 для суммы/разности)\nи выберите единицы измерения";
+                btnAdd.Enabled = btnSub.Enabled = true;
+                btnMul.Enabled = btnDiv.Enabled = false;
+            }
+
             lblResult.Text = "Результат: ";
         }
         private void InitializeComponent()
@@ -182,7 +193,7 @@ namespace ComplexCalculator
 
             // Выбор режима
             cmbMode = new ComboBox { Location = new Point(20, 5), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
-            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы", "Выражения со скобками", "Системы счисления", "Логарифмы", "Многочлены", "Система уравнений", "Поиск корней (f(x)=0)" });
+            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы", "Выражения со скобками", "Системы счисления", "Логарифмы", "Многочлены", "Система уравнений", "Поиск корней (f(x)=0)", "Интервалы времени" });
             cmbMode.SelectedIndex = 0; // По умолчанию первый вариант
             this.Controls.Add(cmbMode);
 
@@ -224,6 +235,7 @@ namespace ComplexCalculator
             btnEvalPoly = new Button { Text = "Значение в точке X", Location = new Point(20, 420), Width = 180, Visible = false };
             btnSolveSystem = new Button { Text = "Решить систему 3х3", Location = new Point(20, 420), Width = 180, Visible = false };
             btnFindRoot = new Button { Text = "Найти корень", Location = new Point(210, 420), Width = 120, Visible = false };
+            btnTimeToFull = new Button { Text = "В полный формат", Location = new Point(120, 420), Width = 150, Visible = false };
 
             // Кнопки управления
             btnClear = new Button { Text = "Сброс", Location = new Point(20, 460), Width = 160 };
@@ -250,6 +262,10 @@ namespace ComplexCalculator
             cmbRootMethod.Items.AddRange(new string[] { "Половинного деления", "Метод Ньютона", "Метод итераций" });
             cmbRootMethod.SelectedIndex = 0;
 
+            cmbTimeUnit = new ComboBox { Location = new Point(20, 420), Width = 80, Visible = false, DropDownStyle = ComboBoxStyle.DropDownList };
+            cmbTimeUnit.Items.AddRange(new string[] { "Часы", "Минуты", "Секунды" });
+            cmbTimeUnit.SelectedIndex = 2; // По умолчанию секунды
+
             // Подписываемся на события клика
             btnAdd.Click += (s, e) => ExecuteOperation("+");
             btnSub.Click += (s, e) => ExecuteOperation("-");
@@ -270,6 +286,7 @@ namespace ComplexCalculator
             btnEvalPoly.Click += (s, e) => ExecuteOperation("poly_eval");
             btnSolveSystem.Click += (s, e) => ExecuteOperation("solve_system");
             btnFindRoot.Click += (s, e) => ExecuteOperation("find_root");
+            btnTimeToFull.Click += (s, e) => ExecuteOperation("time_to_full");
 
 
             // ПОДПИСЫВАЕМСЯ НА СОБЫТИЕ СМЕНЫ ВЫБОРА
@@ -316,6 +333,8 @@ namespace ComplexCalculator
             this.Controls.Add(btnSolveSystem);
             this.Controls.Add(cmbRootMethod);
             this.Controls.Add(btnFindRoot);
+            this.Controls.Add(cmbTimeUnit);
+            this.Controls.Add(btnTimeToFull);
         }
 
         private void ExecuteFractionAction(string action)
@@ -345,6 +364,26 @@ namespace ComplexCalculator
 
                 switch (mode)
                 {
+                    case "Интервалы времени":
+                    {
+                        string unit = cmbTimeUnit.Text;
+                        var t1 = TimeInterval.Parse(txtInput1.Text, unit);
+
+                        if (op == "time_to_full")
+                        {
+                            resultStr = $"Преобразовано:\n{t1.ToString()}\nВсего минут: {t1.ToMinutes():F2}\nВсего часов: {t1.ToHours():F2}";
+                        }
+                        else
+                        {
+                            var t2 = TimeInterval.Parse(txtInput2.Text, unit);
+                            if (op == "+") resultStr = (t1 + t2).ToString();
+                            if (op == "-") resultStr = (t1 - t2).ToString();
+                        }
+                        lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
+                        Logger.Log(txtInput1.Text, op, txtInput2.Text, resultStr);
+                        return;
+                    }
+    
                     case "Поиск корней (f(x)=0)":
                     {
                         if (op == "find_root")
