@@ -17,6 +17,7 @@ namespace ComplexCalculator
         private Button btnConvert;
         private ComboBox cmbComplexForm; // Выбор формы отображения
         private ComplexNumber lastComplexResult; 
+        private Button btnFlip, btnNegate;
 
         public CalculatorForm()
         {
@@ -25,34 +26,32 @@ namespace ComplexCalculator
 
         private void UpdateUIState()
         {
-            if (btnPower == null) return; // Защита от раннего вызова
+            if (btnAdd == null) return; // Защита
 
             string mode = cmbMode.SelectedItem?.ToString() ?? "";
 
-            // Комплексные кнопки
+            // 1. Режимы, где нужны ВСЕ базовые операции (+, -, *, /)
+            // Это всё, кроме Дат.
+            bool standardOps = (mode != "Даты");
+            btnAdd.Enabled = standardOps;
+            btnMul.Enabled = standardOps;
+            btnDiv.Enabled = standardOps;
+            btnSub.Enabled = true; // Минус нужен всем (даже датам)
+
+            // 2. Комплексные числа
             bool isComplex = (mode == "Комплексные числа");
-            // Включаем/выключаем элементы управления
             btnPower.Enabled = isComplex;
             btnConvert.Enabled = isComplex;
             cmbComplexForm.Enabled = isComplex;
             txtPower.Enabled = isComplex;
 
-            // Кнопки операций
-            bool isDate = (mode == "Даты");
-            // Если это даты, то работают только кнопки "-" и "Сброс"
-            btnAdd.Enabled = !isDate;
-            btnMul.Enabled = !isDate;
-            btnDiv.Enabled = !isDate;
-            btnSub.Enabled = true; // Минус работает всегда
+            // 3. Обыкновенные дроби
+            bool isFraction = (mode == "Обыкновенные дроби");
+            btnFlip.Enabled = isFraction;
+            btnNegate.Enabled = isFraction;
 
-            // Опционально: меняем цвет фона, чтобы было нагляднее
-            txtPower.BackColor = isComplex ? Color.White : Color.LightGray;
-
-            // Очищаем результат при смене режима, чтобы не путать пользователя
-            lblResult.Text = isDate ? "Введите две даты и нажмите '-'" : "Результат: ";
-            lastComplexResult = null; 
+            lblResult.Text = "Результат: ";
         }
-
         private void InitializeComponent()
         {
             // Настройки окна
@@ -76,7 +75,7 @@ namespace ComplexCalculator
 
             // Выбор режима
             cmbMode = new ComboBox { Location = new Point(20, 5), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
-            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты"});
+            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби"});
             cmbMode.SelectedIndex = 0; // По умолчанию первый вариант
             this.Controls.Add(cmbMode);
 
@@ -93,6 +92,10 @@ namespace ComplexCalculator
             btnSub = new Button { Text = "-", Location = new Point(105, 180), Width = 75 };
             btnMul = new Button { Text = "*", Location = new Point(190, 180), Width = 75 };
             btnDiv = new Button { Text = "/", Location = new Point(275, 180), Width = 75 };
+            btnFlip = new Button { Text = "1/x (Flip)", Location = new Point(20, 360), Width = 80 };
+            btnNegate = new Button { Text = "+/-", Location = new Point(110, 360), Width = 80 };
+            btnPower = new Button { Text = "В степень", Location = new Point(20, 280), Width = 85 };
+            btnConvert = new Button { Text = "Сменить форму", Location = new Point(110, 280), Width = 100 };
 
             // Кнопки управления
             btnClear = new Button { Text = "Сброс", Location = new Point(20, 230), Width = 160 };
@@ -100,9 +103,6 @@ namespace ComplexCalculator
 
             txtPower = new TextBox { Location = new Point(280, 280), Width = 40 };
             Label lblP = new Label { Text = "Степень:", Location = new Point(210, 285), Width = 70 };
-
-            btnPower = new Button { Text = "В степень", Location = new Point(20, 280), Width = 85 };
-            btnConvert = new Button { Text = "Сменить форму", Location = new Point(110, 280), Width = 100 };
 
             cmbComplexForm = new ComboBox { Location = new Point(20, 320), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
             cmbComplexForm.Items.AddRange(new string[] { "Алгебраическая", "Тригонометрическая", "Экспоненциальная" });
@@ -117,6 +117,8 @@ namespace ComplexCalculator
             btnConvert.Click += (s, e) => ChangeResultForm();
             btnClear.Click += btnReset_Click;
             btnShowLog.Click += btnShowLog_Click;
+            btnFlip.Click += (s, e) => ExecuteFractionAction("flip");
+            btnNegate.Click += (s, e) => ExecuteFractionAction("negate");
 
             // ПОДПИСЫВАЕМСЯ НА СОБЫТИЕ СМЕНЫ ВЫБОРА
             cmbMode.SelectedIndexChanged += (s, e) => UpdateUIState();
@@ -137,6 +139,24 @@ namespace ComplexCalculator
             this.Controls.Add(btnPower);
             this.Controls.Add(btnConvert);
             this.Controls.Add(cmbComplexForm);
+            this.Controls.Add(btnFlip);
+            this.Controls.Add(btnNegate);
+        }
+
+        private void ExecuteFractionAction(string action)
+        {
+            try
+            {
+                var f1 = CommonFraction.Parse(txtInput1.Text);
+                CommonFraction res = null;
+
+                if (action == "flip") res = f1.Flip();
+                if (action == "negate") res = f1.Negate();
+
+                txtInput1.Text = res.ToString(); // Записываем результат обратно в первое поле
+                lblResult.Text = "Действие выполнено: " + res.ToString();
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message); }
         }
 
         private void ExecuteOperation(string op)
@@ -148,6 +168,25 @@ namespace ComplexCalculator
 
                 if (op == "^" && mode != "Комплексные числа") return;
 
+                if (mode == "Обыкновенные дроби")
+                {
+                    var f1 = CommonFraction.Parse(txtInput1.Text);
+                    var f2 = CommonFraction.Parse(txtInput2.Text);
+                    CommonFraction res = null;
+
+                    switch (op)
+                    {
+                        case "+": res = f1 + f2; break;
+                        case "-": res = f1 - f2; break;
+                        case "*": res = f1 * f2; break;
+                        case "/": res = f1 / f2; break;
+                    }
+
+                    lblResult.Text = "Результат:\n" + res.ToString();
+                    Logger.Log(txtInput1.Text, op, txtInput2.Text, res.ToString());
+                    return;
+                }
+
                 if (mode == "Даты")
                 {
                     if (op != "-")
@@ -155,13 +194,13 @@ namespace ComplexCalculator
                         MessageBox.Show("Для дат поддерживается только операция вычитания.");
                         return;
                     }
-        
+
                     DateTime date1 = DateModule.Parse(txtInput1.Text);
                     DateTime date2 = DateModule.Parse(txtInput2.Text);
-        
+
                     string resultText = DateModule.GetFullDifference(date1, date2);
                     lblResult.Text = resultText;
-        
+
                     // Логируем (убираем переносы строк для файла)
                     Logger.Log(txtInput1.Text, "минус", txtInput2.Text, resultText.Replace("\n", " "));
                     return;
@@ -221,6 +260,7 @@ namespace ComplexCalculator
 
                 lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
                 Logger.Log(txtInput1.Text, op, txtInput2.Text, resultStr);
+                return;
             }
             catch (Exception ex)
             {
