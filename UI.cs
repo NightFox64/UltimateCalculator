@@ -30,6 +30,7 @@ namespace ComplexCalculator
         private TextBox txtInput4;
         private Label lblLogBase1, lblLogBase2, lblArg1, lblArg2;
         private Button btnPowerLog, btnChangeBase;
+        private Button btnEvalPoly;
 
         public CalculatorForm()
         {
@@ -127,6 +128,15 @@ namespace ComplexCalculator
                 lblResult.Text = "Поля: 1-Арг1, 2-Осн1, 3-Арг2/Параметр, 4-Осн2";
             }
 
+            bool isPoly = (mode == "Многочлены");
+            btnEvalPoly.Visible = isPoly;
+
+            if (isPoly) {
+                lblResult.Text = "Вводите коэфф. через пробел (a0 a1 a2...)\nВ поле 2 вводите X или степень n";
+                btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = true;
+                btnDiv.Enabled = false; // Деление многочленов - сложная операция, часто опускается
+            }
+
             lblResult.Text = "Результат: ";
         }
         private void InitializeComponent()
@@ -146,7 +156,7 @@ namespace ComplexCalculator
 
             // Выбор режима
             cmbMode = new ComboBox { Location = new Point(20, 5), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
-            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы", "Выражения со скобками", "Системы счисления", "Логарифмы" });
+            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы", "Выражения со скобками", "Системы счисления", "Логарифмы", "Многочлены" });
             cmbMode.SelectedIndex = 0; // По умолчанию первый вариант
             this.Controls.Add(cmbMode);
 
@@ -185,6 +195,7 @@ namespace ComplexCalculator
             btnConvertNS = new Button { Text = "Перевести", Location = new Point(20, 420), Width = 160, Visible = false };
             btnPowerLog = new Button { Text = "В степень", Location = new Point(20, 420), Width = 100, Visible = false };
             btnChangeBase = new Button { Text = "Сменить осн.", Location = new Point(130, 420), Width = 100, Visible = false };
+            btnEvalPoly = new Button { Text = "Значение в точке X", Location = new Point(20, 420), Width = 180, Visible = false };
 
             // Кнопки управления
             btnClear = new Button { Text = "Сброс", Location = new Point(20, 460), Width = 160 };
@@ -224,6 +235,7 @@ namespace ComplexCalculator
             btnConvertNS.Click += (s, e) => ExecuteOperation("convert_ns");
             btnPowerLog.Click += (s, e) => ExecuteOperation("log_pow");
             btnChangeBase.Click += (s, e) => ExecuteOperation("log_base");
+            btnEvalPoly.Click += (s, e) => ExecuteOperation("poly_eval");
 
 
             // ПОДПИСЫВАЕМСЯ НА СОБЫТИЕ СМЕНЫ ВЫБОРА
@@ -266,6 +278,7 @@ namespace ComplexCalculator
             this.Controls.Add(txtInput4);
             this.Controls.Add(btnPowerLog);
             this.Controls.Add(btnChangeBase);
+            this.Controls.Add(btnEvalPoly);
         }
 
         private void ExecuteFractionAction(string action)
@@ -295,6 +308,29 @@ namespace ComplexCalculator
 
                 switch (mode)
                 {
+                    case "Многочлены":
+                    {
+                        var p1 = Polynomial.Parse(txtInput1.Text);
+    
+                        if (op == "poly_eval") {
+                            double x = double.Parse(txtInput2.Text);
+                            resultStr = $"P({x}) = {p1.Evaluate(x)}";
+                        }
+                        else if (op == "^") {
+                            int n = int.Parse(txtInput2.Text);
+                            resultStr = p1.Power(n).ToString();
+                        }
+                        else {
+                            var p2 = Polynomial.Parse(txtInput2.Text);
+                            if (op == "+") resultStr = (p1 + p2).ToString();
+                            if (op == "-") resultStr = (p1 - p2).ToString();
+                            if (op == "*") resultStr = (p1 * p2).ToString();
+                        }
+                        lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
+                        Logger.Log(txtInput1.Text, op, txtInput2.Text, resultStr);
+                        return;
+                    }
+
                     case "Логарифмы":
                     {
                         var log1 = new LogNumber(double.Parse(txtInput1.Text), double.Parse(txtInput2.Text));
