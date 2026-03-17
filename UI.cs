@@ -23,6 +23,7 @@ namespace ComplexCalculator
         private Label lblA, lblB, lblC;
         private Button btnSolve;
         private Button btnTrig;
+        private Button btnCalculateExpr;
 
         public CalculatorForm()
         {
@@ -69,6 +70,27 @@ namespace ComplexCalculator
             // Для углов умножение и деление обычно идет на ЧИСЛО, а не на другой угол.
             // Но для простоты оставим кнопки активными.
 
+            bool isExpr = (mode == "Выражения со скобками");
+            btnCalculateExpr.Visible = isExpr;
+
+            if (isExpr)
+            {
+                txtInput2.Visible = false; // Второе поле не нужно
+                lblB.Visible = false;
+                // Выключаем стандартные кнопки, так как всё выражение в одном поле
+                btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
+                lblResult.Text = "Введите выражение в первое поле\n(например: (2+2)*2 )";
+            }
+            else
+            {
+                // Возвращаем видимость для других режимов (кроме Квадратных уравнений)
+                if (mode != "Квадратные уравнения") 
+                {
+                    txtInput2.Visible = true;
+                    lblB.Visible = true;
+                }
+            }
+
             lblResult.Text = "Результат: ";
         }
         private void InitializeComponent()
@@ -88,7 +110,7 @@ namespace ComplexCalculator
 
             // Выбор режима
             cmbMode = new ComboBox { Location = new Point(20, 5), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
-            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы"});
+            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы", "Выражения со скобками" });
             cmbMode.SelectedIndex = 0; // По умолчанию первый вариант
             this.Controls.Add(cmbMode);
 
@@ -116,6 +138,7 @@ namespace ComplexCalculator
             btnConvert = new Button { Text = "Сменить форму", Location = new Point(110, 310), Width = 100 };
             btnSolve = new Button { Text = "Найти корни", Location = new Point(230, 310), Width = 100 };
             btnTrig = new Button { Text = "Sin/Cos/Tan", Location = new Point(20, 380), Width = 160, Visible = false };
+            btnCalculateExpr = new Button { Text = "Вычислить выражение", Location = new Point(20, 380), Width = 180, Visible = false };
 
             // Кнопки управления
             btnClear = new Button { Text = "Сброс", Location = new Point(20, 410), Width = 160 };
@@ -141,6 +164,8 @@ namespace ComplexCalculator
             btnNegate.Click += (s, e) => ExecuteFractionAction("negate");
             btnSolve.Click += (s, e) => ExecuteOperation("solve");
             btnTrig.Click += (s, e) => ExecuteOperation("trig");
+            btnCalculateExpr.Click += (s, e) => ExecuteOperation("eval_expr");
+
 
             // ПОДПИСЫВАЕМСЯ НА СОБЫТИЕ СМЕНЫ ВЫБОРА
             cmbMode.SelectedIndexChanged += (s, e) => UpdateUIState();
@@ -169,6 +194,7 @@ namespace ComplexCalculator
             this.Controls.Add(txtInput3);
             this.Controls.Add(btnSolve);
             this.Controls.Add(btnTrig);
+            this.Controls.Add(btnCalculateExpr);
         }
 
         private void ExecuteFractionAction(string action)
@@ -198,6 +224,22 @@ namespace ComplexCalculator
 
                 switch (mode)
                 {
+                    case "Выражения со скобками":
+                    {
+                        if (op == "eval_expr")
+                        {
+                            string expr = txtInput1.Text;
+
+                            // 1. Сначала проверяем
+                            ExpressionModule.Validate(expr);
+
+                            // 2. Если проверка прошла - считаем
+                            resultStr = ExpressionModule.Evaluate(expr);
+                        }
+                        lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
+                        Logger.Log(txtInput1.Text, op, txtInput2.Text, resultStr);
+                        return; 
+                    }
                     case "Углы":
                     {
                         var ang1 = AngleModule.Parse(txtInput1.Text);
