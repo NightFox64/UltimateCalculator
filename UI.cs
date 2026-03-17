@@ -37,6 +37,19 @@ namespace ComplexCalculator
                 Font = new Font("Arial", 10, FontStyle.Bold)
             };
 
+            this.Text = "Комплексный калькулятор";
+
+            // Выбор режима
+            cmbMode = new ComboBox { Location = new Point(20, 5), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
+            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби" });
+            cmbMode.SelectedIndex = 0; // По умолчанию первый вариант
+            this.Controls.Add(cmbMode);
+
+            // Сдвинь остальные элементы чуть ниже, если нужно, 
+            // или просто убедись, что они не перекрывают друг друга
+            txtInput1 = new TextBox { Location = new Point(20, 40), Width = 340 };
+            txtInput2 = new TextBox { Location = new Point(20, 80), Width = 340 };
+
             // Кнопки операций
             btnAdd = new Button { Text = "+", Location = new Point(20, 180), Width = 75 };
             btnSub = new Button { Text = "-", Location = new Point(105, 180), Width = 75 };
@@ -71,36 +84,39 @@ namespace ComplexCalculator
         {
             try
             {
-                // Валидация
-                if (!BigNumber25.Validate(txtInput1.Text) || !BigNumber25.Validate(txtInput2.Text))
+                string resultStr = "";
+                string mode = cmbMode.SelectedItem.ToString();
+        
+                if (mode == "25-значные числа")
                 {
-                    string error = "Ошибка: Введите числа (до 25 знаков)";
-                    MessageBox.Show(error);
-                    Logger.LogError(error);
-                    return;
+                    if (!BigNumber25.Validate(txtInput1.Text) || !BigNumber25.Validate(txtInput2.Text))
+                        throw new Exception("Неверный формат 25-значного числа.");
+        
+                    var n1 = new BigNumber25(txtInput1.Text);
+                    var n2 = new BigNumber25(txtInput2.Text);
+                    
+                    if (op == "+") resultStr = (n1 + n2).ToString();
+                    else if (op == "-") resultStr = (n1 - n2).ToString();
+                    else if (op == "*") resultStr = (n1 * n2).ToString();
+                    else if (op == "/") resultStr = (n1 / n2).ToString();
                 }
-
-                var n1 = new BigNumber25(txtInput1.Text);
-                var n2 = new BigNumber25(txtInput2.Text);
-                BigNumber25 result = null;
-
-                switch (op)
+                else if (mode == "Десятичные дроби")
                 {
-                    case "+": result = n1 + n2; break;
-                    case "-": result = n1 - n2; break;
-                    case "*": result = n1 * n2; break;
-                    case "/": 
-                        if (txtInput2.Text == "0") throw new DivideByZeroException("Деление на ноль!");
-                        result = n1 / n2; 
-                        break;
+                    var d1 = new DecimalFraction(txtInput1.Text);
+                    var d2 = new DecimalFraction(txtInput2.Text);
+        
+                    if (op == "+") resultStr = (d1 + d2).ToString();
+                    else if (op == "-") resultStr = (d1 - d2).ToString();
+                    else if (op == "*") resultStr = (d1 * d2).ToString();
+                    else if (op == "/") resultStr = (d1 / d2).ToString();
                 }
-
-                lblResult.Text = "Результат:\n" + result.ToString();
-                Logger.Log(txtInput1.Text, op, txtInput2.Text, result.ToString());
+        
+                lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
+                Logger.Log(txtInput1.Text, op, txtInput2.Text, resultStr);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Произошла ошибка: " + ex.Message);
+                MessageBox.Show("Ошибка: " + ex.Message);
                 Logger.LogError(ex.Message);
             }
         }
