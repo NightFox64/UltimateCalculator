@@ -25,20 +25,31 @@ namespace ComplexCalculator
 
         private void UpdateUIState()
         {
-            string mode = cmbMode.SelectedItem?.ToString() ?? "";
-            bool isComplex = (mode == "Комплексные числа");
+            if (btnPower == null) return; // Защита от раннего вызова
 
+            string mode = cmbMode.SelectedItem?.ToString() ?? "";
+
+            // Комплексные кнопки
+            bool isComplex = (mode == "Комплексные числа");
             // Включаем/выключаем элементы управления
             btnPower.Enabled = isComplex;
             btnConvert.Enabled = isComplex;
             cmbComplexForm.Enabled = isComplex;
             txtPower.Enabled = isComplex;
 
+            // Кнопки операций
+            bool isDate = (mode == "Даты");
+            // Если это даты, то работают только кнопки "-" и "Сброс"
+            btnAdd.Enabled = !isDate;
+            btnMul.Enabled = !isDate;
+            btnDiv.Enabled = !isDate;
+            btnSub.Enabled = true; // Минус работает всегда
+
             // Опционально: меняем цвет фона, чтобы было нагляднее
             txtPower.BackColor = isComplex ? Color.White : Color.LightGray;
 
             // Очищаем результат при смене режима, чтобы не путать пользователя
-            lblResult.Text = "Результат: ";
+            lblResult.Text = isDate ? "Введите две даты и нажмите '-'" : "Результат: ";
             lastComplexResult = null; 
         }
 
@@ -65,7 +76,7 @@ namespace ComplexCalculator
 
             // Выбор режима
             cmbMode = new ComboBox { Location = new Point(20, 5), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
-            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа"});
+            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты"});
             cmbMode.SelectedIndex = 0; // По умолчанию первый вариант
             this.Controls.Add(cmbMode);
 
@@ -136,6 +147,25 @@ namespace ComplexCalculator
                 string mode = cmbMode.SelectedItem.ToString();
 
                 if (op == "^" && mode != "Комплексные числа") return;
+
+                if (mode == "Даты")
+                {
+                    if (op != "-")
+                    {
+                        MessageBox.Show("Для дат поддерживается только операция вычитания.");
+                        return;
+                    }
+        
+                    DateTime date1 = DateModule.Parse(txtInput1.Text);
+                    DateTime date2 = DateModule.Parse(txtInput2.Text);
+        
+                    string resultText = DateModule.GetFullDifference(date1, date2);
+                    lblResult.Text = resultText;
+        
+                    // Логируем (убираем переносы строк для файла)
+                    Logger.Log(txtInput1.Text, "минус", txtInput2.Text, resultText.Replace("\n", " "));
+                    return;
+                }
 
                 if (mode == "Комплексные числа")
                 {
