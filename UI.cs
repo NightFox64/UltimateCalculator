@@ -45,145 +45,136 @@ namespace ComplexCalculator
 
         private void UpdateUIState()
         {
-            if (btnAdd == null) return; // Защита
-
+            if (btnAdd == null) return; // Защита от раннего вызова
+        
             string mode = cmbMode.SelectedItem?.ToString() ?? "";
-
-            // 1. Режимы, где нужны ВСЕ базовые операции (+, -, *, /)
-            // Это всё, кроме Дат.
-            bool standardOps = (mode != "Даты");
-            btnAdd.Enabled = standardOps;
-            btnMul.Enabled = standardOps;
-            btnDiv.Enabled = standardOps;
-            btnSub.Enabled = true; // Минус нужен всем (даже датам)
-
-            // 2. Комплексные числа
-            bool isComplex = (mode == "Комплексные числа");
-            btnPower.Enabled = isComplex;
-            btnConvert.Enabled = isComplex;
-            cmbComplexForm.Enabled = isComplex;
-            txtPower.Enabled = isComplex;
-
-            // 3. Обыкновенные дроби
-            bool isFraction = (mode == "Обыкновенные дроби");
-            btnFlip.Enabled = isFraction;
-            btnNegate.Enabled = isFraction;
-
-            bool isQuadratic = (mode == "Квадратные уравнения");
-            txtInput3.Visible = isQuadratic;
-            lblC.Visible = isQuadratic;
-            btnSolve.Visible = isQuadratic;
-            // Для уравнений стандартные + - * / не нужны
-            if (isQuadratic) {
-                btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
-            }
-
-            bool isAngle = (mode == "Углы");
-            btnTrig.Visible = isAngle;
-            // Для углов умножение и деление обычно идет на ЧИСЛО, а не на другой угол.
-            // Но для простоты оставим кнопки активными.
-
-            bool isExpr = (mode == "Выражения со скобками");
-            btnCalculateExpr.Visible = isExpr;
-
-            if (isExpr)
-            {
-                txtInput2.Visible = false; // Второе поле не нужно
-                lblB.Visible = false;
-                // Выключаем стандартные кнопки, так как всё выражение в одном поле
-                btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
-                lblResult.Text = "Введите выражение в первое поле\n(например: (2+2)*2 )";
-            }
-            else
-            {
-                // Возвращаем видимость для других режимов (кроме Квадратных уравнений)
-                if (mode != "Квадратные уравнения") 
-                {
-                    txtInput2.Visible = true;
-                    lblB.Visible = true;
-                }
-            }
-
-            bool isNS = (mode == "Системы счисления");
-            lblFrom.Visible = cmbFromBase.Visible = isNS;
-            lblTo.Visible = cmbToBase.Visible = isNS;
-            btnConvertNS.Visible = isNS;
-
-            if (isNS)
-            {
-                txtInput2.Visible = false; // Нам не нужно второе текстовое поле
-                lblB.Visible = false;
-                btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
-                lblResult.Text = "Введите число в первое поле\nи выберите системы счисления";
-            }
-
-            bool isLog = (mode == "Логарифмы");
-
-            // Управляем всеми полями
-            lblArg1.Visible = isLog;
-            lblLogBase1.Visible = isLog;
-            lblArg2.Visible = isLog || isQuadratic; // lblArg2 используем как lblC для уравнений
-            lblLogBase2.Visible = isLog;
-            txtInput3.Visible = isLog || isQuadratic;
-            txtInput4.Visible = isLog;
-            btnPowerLog.Visible = isLog;
-            btnChangeBase.Visible = isLog;
-            
-            if (isLog) {
-                btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = true;
-                lblResult.Text = "Поля: 1-Арг1, 2-Осн1, 3-Арг2/Параметр, 4-Осн2";
-            }
-
-            bool isPoly = (mode == "Многочлены");
-            btnEvalPoly.Visible = isPoly;
-
-            if (isPoly) {
-                lblResult.Text = "Вводите коэфф. через пробел (a0 a1 a2...)\nВ поле 2 вводите X или степень n";
-                btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = true;
-                btnDiv.Enabled = false; // Деление многочленов - сложная операция, часто опускается
-            }
-
-            bool isSystem = (mode == "Система уравнений");
-            btnSolveSystem.Visible = isSystem;
-
-            if (isSystem) {
-                txtInput3.Visible = true; // Показываем третье поле
-                lblA.Text = "1:"; lblB.Text = "2:"; lblC.Text = "3:";
-                lblA.Visible = lblB.Visible = lblC.Visible = true;
-                lblResult.Text = "Введите коэффициенты a b c d через пробел\nв каждой из трех строк.";
-                btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
-            }
-
-            bool isRoot = (mode == "Поиск корней (f(x)=0)");
-            cmbRootMethod.Visible = btnFindRoot.Visible = isRoot;
-            txtInput3.Visible = isRoot;
-            lblC.Visible = isRoot;
-
-            if (isRoot) {
-                lblA.Text = "Ф:"; 
-                lblB.Text = "И:"; // Для Ньютона берем только 'a' как x0
-                lblC.Text = "Точность (eps):";
-                lblResult.Text = "Пример: x*x - 2 = 0\nИнтервал: 1 2\nТочность: 0,001";
-            }
-
-            bool isTime = (mode == "Интервалы времени");
-            cmbTimeUnit.Visible = btnTimeToFull.Visible = isTime;
-
-            if (isTime) {
-                lblResult.Text = "Введите число в поле 1 (и 2 для суммы/разности)\nи выберите единицы измерения";
-                btnAdd.Enabled = btnSub.Enabled = true;
-                btnMul.Enabled = btnDiv.Enabled = false;
-            }
-
-            bool isRoman = (mode == "Римские цифры");
-            btnMod.Visible = btnToDecimal.Visible = btnToRoman.Visible = isRoman;
-
-            if (isRoman) {
-                btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = true;
-                lblResult.Text = "Можно вводить римские (X, V) или арабские числа";
-            }
-
+        
+            // === ШАГ 1: СБРОС ВСЕГО В СТАНДАРТНОЕ СОСТОЯНИЕ ===
+            // Поля ввода
+            txtInput1.Visible = true;
+            txtInput2.Visible = true;
+            txtInput3.Visible = false;
+            txtInput4.Visible = false;
+        
+            // Метки (Labels) - возвращаем стандартные имена
+            lblA.Visible = true; lblA.Text = "Число 1:";
+            lblB.Visible = true; lblB.Text = "Число 2:";
+            lblC.Visible = false; lblC.Text = "Число 3:";
+            lblLogBase2.Visible = false; // Метка для 4-го поля
+        
+            // Стандартные кнопки операций
+            btnAdd.Enabled = true;
+            btnSub.Enabled = true;
+            btnMul.Enabled = true;
+            btnDiv.Enabled = true;
+        
+            // Скрываем все спец. кнопки (по умолчанию)
+            btnPower.Visible = btnConvert.Visible = cmbComplexForm.Visible = false;
+            btnFlip.Visible = btnNegate.Visible = false;
+            btnSolve.Visible = false;
+            btnTrig.Visible = false;
+            btnCalculateExpr.Visible = false;
+            btnConvertNS.Visible = lblFrom.Visible = cmbFromBase.Visible = lblTo.Visible = cmbToBase.Visible = false;
+            btnPowerLog.Visible = btnChangeBase.Visible = false;
+            btnEvalPoly.Visible = false;
+            btnSolveSystem.Visible = false;
+            cmbRootMethod.Visible = btnFindRoot.Visible = false;
+            cmbTimeUnit.Visible = btnTimeToFull.Visible = false;
+            btnMod.Visible = btnToDecimal.Visible = btnToRoman.Visible = false;
+            txtPower.Visible = false;
+        
+            // Подсказка по умолчанию
             lblResult.Text = "Результат: ";
+        
+            // === ШАГ 2: ВКЛЮЧАЕМ СПЕЦИФИКУ ДЛЯ КАЖДОГО РЕЖИМА ===
+            switch (mode)
+            {
+                case "25-значные числа":
+                case "Десятичные дроби":
+                    // Здесь всё стандартно, ничего менять не нужно
+                    break;
+        
+                case "Комплексные числа":
+                    btnPower.Visible = btnConvert.Visible = cmbComplexForm.Visible = true;
+                    btnPower.Enabled = btnConvert.Enabled = true; // Убеждаемся что активны
+                    txtPower.Visible = true;
+                    txtPower.Enabled = true;
+                    lblResult.Text = "Формат: a+bi (например 1+i или 5-3i)";
+                    break;
+        
+                case "Даты":
+                    btnAdd.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
+                    lblResult.Text = "Форматы: dd.MM.yyyy, dd/MM/yyyy, MM/dd/yyyy.\nИспользуйте '-' для разницы.";
+                    break;
+        
+                case "Обыкновенные дроби":
+                    btnFlip.Visible = btnNegate.Visible = true;
+                    btnFlip.Enabled = btnNegate.Enabled = true;
+                    lblResult.Text = "Формат: числитель/знаменатель (например 1/2)";
+                    break;
+        
+                case "Квадратные уравнения":
+                    txtInput3.Visible = true; lblC.Visible = true; btnSolve.Visible = true;
+                    lblA.Text = "a:"; lblB.Text = "b:"; lblC.Text = "c:";
+                    btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
+                    lblResult.Text = "Введите коэффициенты и нажмите 'Найти корни'";
+                    break;
+        
+                case "Углы":
+                    btnTrig.Visible = true;
+                    lblResult.Text = "Формат: Градусы Минуты Секунды (через пробел)";
+                    break;
+        
+                case "Выражения со скобками":
+                    txtInput2.Visible = false; lblB.Visible = false;
+                    btnCalculateExpr.Visible = true;
+                    btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
+                    lblResult.Text = "Пример: (2+2)*2. Вводите в первое поле.";
+                    break;
+        
+                case "Системы счисления":
+                    txtInput2.Visible = false; lblB.Visible = false;
+                    lblFrom.Visible = cmbFromBase.Visible = lblTo.Visible = cmbToBase.Visible = btnConvertNS.Visible = true;
+                    btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
+                    break;
+        
+                case "Логарифмы":
+                    txtInput3.Visible = txtInput4.Visible = true;
+                    lblC.Visible = true; lblLogBase2.Visible = true;
+                    btnPowerLog.Visible = btnChangeBase.Visible = true;
+                    lblA.Text = "Арг 1:"; lblB.Text = "Осн 1:"; 
+                    lblC.Text = "Арг 2 / Пар:"; lblLogBase2.Text = "Осн 2:";
+                    break;
+        
+                case "Многочлены":
+                    btnEvalPoly.Visible = true;
+                    btnDiv.Enabled = false;
+                    lblResult.Text = "Коэфф. через пробел (a0 a1 a2...). Поле 2: X или Степень.";
+                    break;
+        
+                case "Система уравнений":
+                    txtInput3.Visible = true; lblC.Visible = true; btnSolveSystem.Visible = true;
+                    lblA.Text = "Ур 1:"; lblB.Text = "Ур 2:"; lblC.Text = "Ур 3:";
+                    btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
+                    break;
+        
+                case "Поиск корней (f(x)=0)":
+                    txtInput3.Visible = true; lblC.Visible = true;
+                    cmbRootMethod.Visible = btnFindRoot.Visible = true;
+                    lblA.Text = "Ф-ция:"; lblB.Text = "Интервал:"; lblC.Text = "Точность:";
+                    btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
+                    break;
+        
+                case "Интервалы времени":
+                    cmbTimeUnit.Visible = btnTimeToFull.Visible = true;
+                    btnMul.Enabled = btnDiv.Enabled = false;
+                    break;
+        
+                case "Римские цифры":
+                    btnMod.Visible = btnToDecimal.Visible = btnToRoman.Visible = true;
+                    lblResult.Text = "Вводите числа (X, V, I...) или (1, 5, 10...)";
+                    break;
+            }
         }
         private void InitializeComponent()
         {
@@ -234,7 +225,7 @@ namespace ComplexCalculator
             btnFlip = new Button { Text = "1/x (Flip)", Location = new Point(20, 320), Width = 75 };
             btnNegate = new Button { Text = "+/-", Location = new Point(110, 320), Width = 75 };
             btnPower = new Button { Text = "В степень", Location = new Point(20, 350), Width = 85 };
-            btnConvert = new Button { Text = "Сменить форму", Location = new Point(110, 350), Width = 100 };
+            btnConvert = new Button { Text = "Сменить форму", Location = new Point(110, 350), Width = 110 };
             btnSolve = new Button { Text = "Найти корни", Location = new Point(230, 350), Width = 100 };
             btnTrig = new Button { Text = "Sin/Cos/Tan", Location = new Point(20, 420), Width = 160, Visible = false };
             btnCalculateExpr = new Button { Text = "Вычислить выражение", Location = new Point(20, 420), Width = 180, Visible = false };
