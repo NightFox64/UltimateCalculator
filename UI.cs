@@ -31,6 +31,7 @@ namespace ComplexCalculator
         private Label lblLogBase1, lblLogBase2, lblArg1, lblArg2;
         private Button btnPowerLog, btnChangeBase;
         private Button btnEvalPoly;
+        private Button btnSolveSystem;
 
         public CalculatorForm()
         {
@@ -137,6 +138,17 @@ namespace ComplexCalculator
                 btnDiv.Enabled = false; // Деление многочленов - сложная операция, часто опускается
             }
 
+            bool isSystem = (mode == "Система уравнений");
+            btnSolveSystem.Visible = isSystem;
+
+            if (isSystem) {
+                txtInput3.Visible = true; // Показываем третье поле
+                lblA.Text = "1:"; lblB.Text = "2:"; lblC.Text = "3:";
+                lblA.Visible = lblB.Visible = lblC.Visible = true;
+                lblResult.Text = "Введите коэффициенты a b c d через пробел\nв каждой из трех строк.";
+                btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
+            }
+
             lblResult.Text = "Результат: ";
         }
         private void InitializeComponent()
@@ -156,7 +168,7 @@ namespace ComplexCalculator
 
             // Выбор режима
             cmbMode = new ComboBox { Location = new Point(20, 5), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
-            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы", "Выражения со скобками", "Системы счисления", "Логарифмы", "Многочлены" });
+            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы", "Выражения со скобками", "Системы счисления", "Логарифмы", "Многочлены", "Система уравнений" });
             cmbMode.SelectedIndex = 0; // По умолчанию первый вариант
             this.Controls.Add(cmbMode);
 
@@ -196,6 +208,7 @@ namespace ComplexCalculator
             btnPowerLog = new Button { Text = "В степень", Location = new Point(20, 420), Width = 100, Visible = false };
             btnChangeBase = new Button { Text = "Сменить осн.", Location = new Point(130, 420), Width = 100, Visible = false };
             btnEvalPoly = new Button { Text = "Значение в точке X", Location = new Point(20, 420), Width = 180, Visible = false };
+            btnSolveSystem = new Button { Text = "Решить систему 3х3", Location = new Point(20, 420), Width = 180, Visible = false };
 
             // Кнопки управления
             btnClear = new Button { Text = "Сброс", Location = new Point(20, 460), Width = 160 };
@@ -236,6 +249,7 @@ namespace ComplexCalculator
             btnPowerLog.Click += (s, e) => ExecuteOperation("log_pow");
             btnChangeBase.Click += (s, e) => ExecuteOperation("log_base");
             btnEvalPoly.Click += (s, e) => ExecuteOperation("poly_eval");
+            btnSolveSystem.Click += (s, e) => ExecuteOperation("solve_system");
 
 
             // ПОДПИСЫВАЕМСЯ НА СОБЫТИЕ СМЕНЫ ВЫБОРА
@@ -279,6 +293,7 @@ namespace ComplexCalculator
             this.Controls.Add(btnPowerLog);
             this.Controls.Add(btnChangeBase);
             this.Controls.Add(btnEvalPoly);
+            this.Controls.Add(btnSolveSystem);
         }
 
         private void ExecuteFractionAction(string action)
@@ -308,6 +323,22 @@ namespace ComplexCalculator
 
                 switch (mode)
                 {
+                    case "Система уравнений":
+                    {
+                        if (op == "solve_system")
+                        {
+                            // Парсим каждую строку в массив чисел
+                            var row1 = txtInput1.Text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(double.Parse).ToArray();
+                            var row2 = txtInput2.Text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(double.Parse).ToArray();
+                            var row3 = txtInput3.Text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(double.Parse).ToArray();
+
+                            resultStr = SystemSolver.Solve(row1, row2, row3);
+                        }
+                        lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
+                        Logger.Log(txtInput1.Text, op, txtInput2.Text, resultStr);
+                        return;
+                    }
+    
                     case "Многочлены":
                     {
                         var p1 = Polynomial.Parse(txtInput1.Text);
