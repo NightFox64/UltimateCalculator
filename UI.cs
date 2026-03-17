@@ -32,6 +32,8 @@ namespace ComplexCalculator
         private Button btnPowerLog, btnChangeBase;
         private Button btnEvalPoly;
         private Button btnSolveSystem;
+        private ComboBox cmbRootMethod;
+        private Button btnFindRoot;
 
         public CalculatorForm()
         {
@@ -149,6 +151,18 @@ namespace ComplexCalculator
                 btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
             }
 
+            bool isRoot = (mode == "Поиск корней (f(x)=0)");
+            cmbRootMethod.Visible = btnFindRoot.Visible = isRoot;
+            txtInput3.Visible = isRoot;
+            lblC.Visible = isRoot;
+
+            if (isRoot) {
+                lblA.Text = "Ф:"; 
+                lblB.Text = "И:"; // Для Ньютона берем только 'a' как x0
+                lblC.Text = "Точность (eps):";
+                lblResult.Text = "Пример: x*x - 2 = 0\nИнтервал: 1 2\nТочность: 0,001";
+            }
+
             lblResult.Text = "Результат: ";
         }
         private void InitializeComponent()
@@ -168,7 +182,7 @@ namespace ComplexCalculator
 
             // Выбор режима
             cmbMode = new ComboBox { Location = new Point(20, 5), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
-            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы", "Выражения со скобками", "Системы счисления", "Логарифмы", "Многочлены", "Система уравнений" });
+            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы", "Выражения со скобками", "Системы счисления", "Логарифмы", "Многочлены", "Система уравнений", "Поиск корней (f(x)=0)" });
             cmbMode.SelectedIndex = 0; // По умолчанию первый вариант
             this.Controls.Add(cmbMode);
 
@@ -209,6 +223,7 @@ namespace ComplexCalculator
             btnChangeBase = new Button { Text = "Сменить осн.", Location = new Point(130, 420), Width = 100, Visible = false };
             btnEvalPoly = new Button { Text = "Значение в точке X", Location = new Point(20, 420), Width = 180, Visible = false };
             btnSolveSystem = new Button { Text = "Решить систему 3х3", Location = new Point(20, 420), Width = 180, Visible = false };
+            btnFindRoot = new Button { Text = "Найти корень", Location = new Point(210, 420), Width = 120, Visible = false };
 
             // Кнопки управления
             btnClear = new Button { Text = "Сброс", Location = new Point(20, 460), Width = 160 };
@@ -231,6 +246,10 @@ namespace ComplexCalculator
             cmbFromBase.SelectedIndex = 4; // 10
             cmbToBase.SelectedIndex = 0; // 2
 
+            cmbRootMethod = new ComboBox { Location = new Point(20, 420), Width = 180, Visible = false, DropDownStyle = ComboBoxStyle.DropDownList };
+            cmbRootMethod.Items.AddRange(new string[] { "Половинного деления", "Метод Ньютона", "Метод итераций" });
+            cmbRootMethod.SelectedIndex = 0;
+
             // Подписываемся на события клика
             btnAdd.Click += (s, e) => ExecuteOperation("+");
             btnSub.Click += (s, e) => ExecuteOperation("-");
@@ -250,6 +269,7 @@ namespace ComplexCalculator
             btnChangeBase.Click += (s, e) => ExecuteOperation("log_base");
             btnEvalPoly.Click += (s, e) => ExecuteOperation("poly_eval");
             btnSolveSystem.Click += (s, e) => ExecuteOperation("solve_system");
+            btnFindRoot.Click += (s, e) => ExecuteOperation("find_root");
 
 
             // ПОДПИСЫВАЕМСЯ НА СОБЫТИЕ СМЕНЫ ВЫБОРА
@@ -294,6 +314,8 @@ namespace ComplexCalculator
             this.Controls.Add(btnChangeBase);
             this.Controls.Add(btnEvalPoly);
             this.Controls.Add(btnSolveSystem);
+            this.Controls.Add(cmbRootMethod);
+            this.Controls.Add(btnFindRoot);
         }
 
         private void ExecuteFractionAction(string action)
@@ -323,6 +345,32 @@ namespace ComplexCalculator
 
                 switch (mode)
                 {
+                    case "Поиск корней (f(x)=0)":
+                    {
+                        if (op == "find_root")
+                        {
+                            string func = txtInput1.Text;
+                            double eps = double.Parse(txtInput3.Text);
+                            
+                            // Парсим интервал [a, b]
+                            var interval = txtInput2.Text.Split(' ').Select(double.Parse).ToArray();
+                            double a = interval[0];
+                            double b = interval.Length > 1 ? interval[1] : a;
+                    
+                            double root = 0;
+                            string method = cmbRootMethod.Text;
+                    
+                            if (method == "Половинного деления") root = RootFinder.Bisection(func, a, b, eps);
+                            else if (method == "Метод Ньютона") root = RootFinder.Newton(func, a, eps);
+                            else root = RootFinder.Iteration(func, a, eps);
+                    
+                            resultStr = $"Корень уравнения:\nx = {root:F6}\nМетод: {method}";
+                        }
+                        lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
+                        Logger.Log(txtInput1.Text, op, txtInput2.Text, resultStr);
+                        return;
+                    }
+    
                     case "Система уравнений":
                     {
                         if (op == "solve_system")
