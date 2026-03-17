@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Тип приложения: WinExe означает, что при запуске не будет консольного окна -->
+    <OutputType>WinExe</OutputType>
+    
+    <!-- Используем современный .NET 8 (если у тебя установлен другой, можно поменять на net6.0-windows или net7.0-windows) -->
+    <TargetFramework>net8.0-windows</TargetFramework>
+    
+    <!-- Включаем поддержку Windows Forms -->
+    <UseWindowsForms>true</UseWindowsForms>
+    
+    <!-- Включаем современные фишки C# -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
