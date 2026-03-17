@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -18,6 +19,9 @@ namespace ComplexCalculator
         private ComboBox cmbComplexForm; // Выбор формы отображения
         private ComplexNumber lastComplexResult; 
         private Button btnFlip, btnNegate;
+        private TextBox txtInput3;
+        private Label lblA, lblB, lblC;
+        private Button btnSolve;
 
         public CalculatorForm()
         {
@@ -50,23 +54,26 @@ namespace ComplexCalculator
             btnFlip.Enabled = isFraction;
             btnNegate.Enabled = isFraction;
 
+            bool isQuadratic = (mode == "Квадратные уравнения");
+            txtInput3.Visible = isQuadratic;
+            lblC.Visible = isQuadratic;
+            btnSolve.Visible = isQuadratic;
+            // Для уравнений стандартные + - * / не нужны
+            if (isQuadratic) {
+                btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
+            }
+
             lblResult.Text = "Результат: ";
         }
         private void InitializeComponent()
         {
-            // Настройки окна
-            this.Text = "Калькулятор 25-значных чисел";
             this.Size = new Size(400, 450);
 
-            // Поля ввода
-            txtInput1 = new TextBox { Location = new Point(20, 20), Width = 340 };
-            txtInput2 = new TextBox { Location = new Point(20, 60), Width = 340 };
-            
             // Метка результата
             lblResult = new Label { 
-                Location = new Point(20, 100), 
+                Location = new Point(20, 160), 
                 Width = 340, 
-                Height = 60, 
+                Height = 80, 
                 Text = "Результат: ",
                 Font = new Font("Arial", 10, FontStyle.Bold)
             };
@@ -75,7 +82,7 @@ namespace ComplexCalculator
 
             // Выбор режима
             cmbMode = new ComboBox { Location = new Point(20, 5), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
-            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби"});
+            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения"});
             cmbMode.SelectedIndex = 0; // По умолчанию первый вариант
             this.Controls.Add(cmbMode);
 
@@ -84,27 +91,33 @@ namespace ComplexCalculator
 
             // Сдвинь остальные элементы чуть ниже, если нужно, 
             // или просто убедись, что они не перекрывают друг друга
-            txtInput1 = new TextBox { Location = new Point(20, 40), Width = 340 };
-            txtInput2 = new TextBox { Location = new Point(20, 80), Width = 340 };
+            txtInput1 = new TextBox { Location = new Point(30, 40), Width = 330 };
+            txtInput2 = new TextBox { Location = new Point(30, 80), Width = 330 };
+            txtInput3 = new TextBox { Location = new Point(30, 120), Width = 330 };
+
+            lblA = new Label { Text = "a:", Location = new Point(5, 43), Width = 15 };
+            lblB = new Label { Text = "b:", Location = new Point(5, 83), Width = 15 };
+            lblC = new Label { Text = "c:", Location = new Point(5, 123), Width = 15 };
 
             // Кнопки операций
-            btnAdd = new Button { Text = "+", Location = new Point(20, 180), Width = 75 };
-            btnSub = new Button { Text = "-", Location = new Point(105, 180), Width = 75 };
-            btnMul = new Button { Text = "*", Location = new Point(190, 180), Width = 75 };
-            btnDiv = new Button { Text = "/", Location = new Point(275, 180), Width = 75 };
-            btnFlip = new Button { Text = "1/x (Flip)", Location = new Point(20, 360), Width = 80 };
-            btnNegate = new Button { Text = "+/-", Location = new Point(110, 360), Width = 80 };
-            btnPower = new Button { Text = "В степень", Location = new Point(20, 280), Width = 85 };
-            btnConvert = new Button { Text = "Сменить форму", Location = new Point(110, 280), Width = 100 };
+            btnAdd = new Button { Text = "+", Location = new Point(20, 250), Width = 75 };
+            btnSub = new Button { Text = "-", Location = new Point(105, 250), Width = 75 };
+            btnMul = new Button { Text = "*", Location = new Point(190, 250), Width = 75 };
+            btnDiv = new Button { Text = "/", Location = new Point(275, 250), Width = 75 };
+            btnFlip = new Button { Text = "1/x (Flip)", Location = new Point(20, 280), Width = 75 };
+            btnNegate = new Button { Text = "+/-", Location = new Point(110, 280), Width = 75 };
+            btnPower = new Button { Text = "В степень", Location = new Point(20, 310), Width = 85 };
+            btnConvert = new Button { Text = "Сменить форму", Location = new Point(110, 310), Width = 100 };
+            btnSolve = new Button { Text = "Найти корни", Location = new Point(230, 310), Width = 100 };
 
             // Кнопки управления
-            btnClear = new Button { Text = "Сброс", Location = new Point(20, 230), Width = 160 };
-            btnShowLog = new Button { Text = "Протокол (Лог)", Location = new Point(190, 230), Width = 160 };
+            btnClear = new Button { Text = "Сброс", Location = new Point(20, 380), Width = 160 };
+            btnShowLog = new Button { Text = "Протокол (Лог)", Location = new Point(190, 380), Width = 160 };
 
             txtPower = new TextBox { Location = new Point(280, 280), Width = 40 };
             Label lblP = new Label { Text = "Степень:", Location = new Point(210, 285), Width = 70 };
 
-            cmbComplexForm = new ComboBox { Location = new Point(20, 320), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
+            cmbComplexForm = new ComboBox { Location = new Point(20, 350), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
             cmbComplexForm.Items.AddRange(new string[] { "Алгебраическая", "Тригонометрическая", "Экспоненциальная" });
             cmbComplexForm.SelectedIndex = 0;
 
@@ -119,6 +132,7 @@ namespace ComplexCalculator
             btnShowLog.Click += btnShowLog_Click;
             btnFlip.Click += (s, e) => ExecuteFractionAction("flip");
             btnNegate.Click += (s, e) => ExecuteFractionAction("negate");
+            btnSolve.Click += (s, e) => ExecuteOperation("solve");
 
             // ПОДПИСЫВАЕМСЯ НА СОБЫТИЕ СМЕНЫ ВЫБОРА
             cmbMode.SelectedIndexChanged += (s, e) => UpdateUIState();
@@ -141,6 +155,11 @@ namespace ComplexCalculator
             this.Controls.Add(cmbComplexForm);
             this.Controls.Add(btnFlip);
             this.Controls.Add(btnNegate);
+            this.Controls.Add(lblA);
+            this.Controls.Add(lblB);
+            this.Controls.Add(lblC);
+            this.Controls.Add(txtInput3);
+            this.Controls.Add(btnSolve);
         }
 
         private void ExecuteFractionAction(string action)
@@ -168,99 +187,123 @@ namespace ComplexCalculator
 
                 if (op == "^" && mode != "Комплексные числа") return;
 
-                if (mode == "Обыкновенные дроби")
+                switch (mode)
                 {
-                    var f1 = CommonFraction.Parse(txtInput1.Text);
-                    var f2 = CommonFraction.Parse(txtInput2.Text);
-                    CommonFraction res = null;
-
-                    switch (op)
+                    case "Квадратные уравнения":
                     {
-                        case "+": res = f1 + f2; break;
-                        case "-": res = f1 - f2; break;
-                        case "*": res = f1 * f2; break;
-                        case "/": res = f1 / f2; break;
+                        if (op == "solve")
+                        {
+                            double a = double.Parse(txtInput1.Text);
+                            double b = double.Parse(txtInput2.Text);
+                            double c = double.Parse(txtInput3.Text);
+
+                            resultStr = QuadraticSolver.Solve(a, b, c);
+                        }
+
+                        lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
+                        return;
                     }
-
-                    lblResult.Text = "Результат:\n" + res.ToString();
-                    Logger.Log(txtInput1.Text, op, txtInput2.Text, res.ToString());
-                    return;
-                }
-
-                if (mode == "Даты")
-                {
-                    if (op != "-")
+                    
+                    case "Обыкновенные дроби":
                     {
-                        MessageBox.Show("Для дат поддерживается только операция вычитания.");
+                        var f1 = CommonFraction.Parse(txtInput1.Text);
+                        var f2 = CommonFraction.Parse(txtInput2.Text);
+                        CommonFraction res = null;
+
+                        switch (op)
+                        {
+                            case "+": res = f1 + f2; break;
+                            case "-": res = f1 - f2; break;
+                            case "*": res = f1 * f2; break;
+                            case "/": res = f1 / f2; break;
+                        }
+
+                        lblResult.Text = "Результат:\n" + res.ToString();
+                        Logger.Log(txtInput1.Text, op, txtInput2.Text, res.ToString());
                         return;
                     }
 
-                    DateTime date1 = DateModule.Parse(txtInput1.Text);
-                    DateTime date2 = DateModule.Parse(txtInput2.Text);
-
-                    string resultText = DateModule.GetFullDifference(date1, date2);
-                    lblResult.Text = resultText;
-
-                    // Логируем (убираем переносы строк для файла)
-                    Logger.Log(txtInput1.Text, "минус", txtInput2.Text, resultText.Replace("\n", " "));
-                    return;
-                }
-
-                if (mode == "Комплексные числа")
-                {
-                    var c1 = ComplexNumber.Parse(txtInput1.Text);
-                    ComplexNumber result = null;
-
-                    if (op == "^") // Возведение в степень
+                    case "Даты":
                     {
-                        int n = int.Parse(txtPower.Text);
-                        result = c1.Power(n);
-                    }
-                    else
-                    {
-                        var c2 = ComplexNumber.Parse(txtInput2.Text);
-                        switch (op)
+                        if (op != "-")
                         {
-                            case "+": result = c1 + c2; break;
-                            case "-": result = c1 - c2; break;
-                            case "*": result = c1 * c2; break;
-                            case "/": result = c1 / c2; break;
+                            MessageBox.Show("Для дат поддерживается только операция вычитания.");
+                            return;
                         }
+
+                        DateTime date1 = DateModule.Parse(txtInput1.Text);
+                        DateTime date2 = DateModule.Parse(txtInput2.Text);
+
+                        string resultText = DateModule.GetFullDifference(date1, date2);
+                        lblResult.Text = resultText;
+
+                        // Логируем (убираем переносы строк для файла)
+                        Logger.Log(txtInput1.Text, "минус", txtInput2.Text, resultText.Replace("\n", " "));
+                        lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
+                        return;
                     }
 
-                    lastComplexResult = result;
-                    DisplayComplexResult();
-                    Logger.Log(txtInput1.Text, op, txtInput2.Text, result.ToString(ComplexForm.Algebraic));
-                    return;
-                }
+                    case "Комплексные числа":
+                    {
+                        var c1 = ComplexNumber.Parse(txtInput1.Text);
+                        ComplexNumber result = null;
 
-                if (mode == "25-значные числа")
-                {
-                    if (!BigNumber25.Validate(txtInput1.Text) || !BigNumber25.Validate(txtInput2.Text))
-                        throw new Exception("Неверный формат 25-значного числа.");
+                        if (op == "^") // Возведение в степень
+                        {
+                            int n = int.Parse(txtPower.Text);
+                            result = c1.Power(n);
+                        }
+                        else
+                        {
+                            var c2 = ComplexNumber.Parse(txtInput2.Text);
+                            switch (op)
+                            {
+                                case "+": result = c1 + c2; break;
+                                case "-": result = c1 - c2; break;
+                                case "*": result = c1 * c2; break;
+                                case "/": result = c1 / c2; break;
+                            }
+                        }
 
-                    var n1 = new BigNumber25(txtInput1.Text);
-                    var n2 = new BigNumber25(txtInput2.Text);
+                        lastComplexResult = result;
+                        DisplayComplexResult();
+                        Logger.Log(txtInput1.Text, op, txtInput2.Text, result.ToString(ComplexForm.Algebraic));
+                        return;
+                    }
 
-                    if (op == "+") resultStr = (n1 + n2).ToString();
-                    else if (op == "-") resultStr = (n1 - n2).ToString();
-                    else if (op == "*") resultStr = (n1 * n2).ToString();
-                    else if (op == "/") resultStr = (n1 / n2).ToString();
-                }
-                else if (mode == "Десятичные дроби")
-                {
-                    var d1 = new DecimalFraction(txtInput1.Text);
-                    var d2 = new DecimalFraction(txtInput2.Text);
+                    case "25-значные числа":
+                    {
+                        if (!BigNumber25.Validate(txtInput1.Text) || !BigNumber25.Validate(txtInput2.Text))
+                            throw new Exception("Неверный формат 25-значного числа.");
 
-                    if (op == "+") resultStr = (d1 + d2).ToString();
-                    else if (op == "-") resultStr = (d1 - d2).ToString();
-                    else if (op == "*") resultStr = (d1 * d2).ToString();
-                    else if (op == "/") resultStr = (d1 / d2).ToString();
-                }
+                        var n1 = new BigNumber25(txtInput1.Text);
+                        var n2 = new BigNumber25(txtInput2.Text);
 
-                lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
-                Logger.Log(txtInput1.Text, op, txtInput2.Text, resultStr);
-                return;
+                        if (op == "+") resultStr = (n1 + n2).ToString();
+                        else if (op == "-") resultStr = (n1 - n2).ToString();
+                        else if (op == "*") resultStr = (n1 * n2).ToString();
+                        else if (op == "/") resultStr = (n1 / n2).ToString();
+
+                        lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
+                        Logger.Log(txtInput1.Text, op, txtInput2.Text, resultStr);
+                        return;
+                    }
+
+                    case "Десятичные дроби":
+                    {
+                        var d1 = new DecimalFraction(txtInput1.Text);
+                        var d2 = new DecimalFraction(txtInput2.Text);
+
+                        if (op == "+") resultStr = (d1 + d2).ToString();
+                        else if (op == "-") resultStr = (d1 - d2).ToString();
+                        else if (op == "*") resultStr = (d1 * d2).ToString();
+                        else if (op == "/") resultStr = (d1 / d2).ToString();
+
+                        lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
+                        Logger.Log(txtInput1.Text, op, txtInput2.Text, resultStr);
+                        return;
+                    }
+                } 
             }
             catch (Exception ex)
             {
