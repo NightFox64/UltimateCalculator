@@ -24,6 +24,9 @@ namespace ComplexCalculator
         private Button btnSolve;
         private Button btnTrig;
         private Button btnCalculateExpr;
+        private ComboBox cmbFromBase, cmbToBase;
+        private Label lblFrom, lblTo;
+        private Button btnConvertNS;
 
         public CalculatorForm()
         {
@@ -91,6 +94,19 @@ namespace ComplexCalculator
                 }
             }
 
+            bool isNS = (mode == "Системы счисления");
+            lblFrom.Visible = cmbFromBase.Visible = isNS;
+            lblTo.Visible = cmbToBase.Visible = isNS;
+            btnConvertNS.Visible = isNS;
+
+            if (isNS)
+            {
+                txtInput2.Visible = false; // Нам не нужно второе текстовое поле
+                lblB.Visible = false;
+                btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = false;
+                lblResult.Text = "Введите число в первое поле\nи выберите системы счисления";
+            }
+
             lblResult.Text = "Результат: ";
         }
         private void InitializeComponent()
@@ -110,7 +126,7 @@ namespace ComplexCalculator
 
             // Выбор режима
             cmbMode = new ComboBox { Location = new Point(20, 5), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
-            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы", "Выражения со скобками" });
+            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы", "Выражения со скобками", "Системы счисления" });
             cmbMode.SelectedIndex = 0; // По умолчанию первый вариант
             this.Controls.Add(cmbMode);
 
@@ -139,6 +155,7 @@ namespace ComplexCalculator
             btnSolve = new Button { Text = "Найти корни", Location = new Point(230, 310), Width = 100 };
             btnTrig = new Button { Text = "Sin/Cos/Tan", Location = new Point(20, 380), Width = 160, Visible = false };
             btnCalculateExpr = new Button { Text = "Вычислить выражение", Location = new Point(20, 380), Width = 180, Visible = false };
+            btnConvertNS = new Button { Text = "Перевести", Location = new Point(20, 380), Width = 160, Visible = false };
 
             // Кнопки управления
             btnClear = new Button { Text = "Сброс", Location = new Point(20, 410), Width = 160 };
@@ -150,6 +167,16 @@ namespace ComplexCalculator
             cmbComplexForm = new ComboBox { Location = new Point(20, 350), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
             cmbComplexForm.Items.AddRange(new string[] { "Алгебраическая", "Тригонометрическая", "Экспоненциальная" });
             cmbComplexForm.SelectedIndex = 0;
+
+            lblFrom = new Label { Text = "Из системы:", Location = new Point(20, 115), Width = 100, Visible = false };
+            cmbFromBase = new ComboBox { Location = new Point(120, 122), Width = 60, DropDownStyle = ComboBoxStyle.DropDownList, Visible = false };
+            lblTo = new Label { Text = "В систему:", Location = new Point(200, 115), Width = 100, Visible = false };
+            cmbToBase = new ComboBox { Location = new Point(300, 122), Width = 60, DropDownStyle = ComboBoxStyle.DropDownList, Visible = false };
+            var bases = new object[] { 2, 3, 8, 9, 10, 16 };
+            cmbFromBase.Items.AddRange(bases);
+            cmbToBase.Items.AddRange(bases);
+            cmbFromBase.SelectedIndex = 4; // 10
+            cmbToBase.SelectedIndex = 0; // 2
 
             // Подписываемся на события клика
             btnAdd.Click += (s, e) => ExecuteOperation("+");
@@ -165,6 +192,7 @@ namespace ComplexCalculator
             btnSolve.Click += (s, e) => ExecuteOperation("solve");
             btnTrig.Click += (s, e) => ExecuteOperation("trig");
             btnCalculateExpr.Click += (s, e) => ExecuteOperation("eval_expr");
+            btnConvertNS.Click += (s, e) => ExecuteOperation("convert_ns");
 
 
             // ПОДПИСЫВАЕМСЯ НА СОБЫТИЕ СМЕНЫ ВЫБОРА
@@ -195,6 +223,11 @@ namespace ComplexCalculator
             this.Controls.Add(btnSolve);
             this.Controls.Add(btnTrig);
             this.Controls.Add(btnCalculateExpr);
+            this.Controls.Add(lblFrom);
+            this.Controls.Add(cmbFromBase);
+            this.Controls.Add(lblTo);
+            this.Controls.Add(cmbToBase);
+            this.Controls.Add(btnConvertNS);
         }
 
         private void ExecuteFractionAction(string action)
@@ -224,6 +257,21 @@ namespace ComplexCalculator
 
                 switch (mode)
                 {
+                    case "Системы счисления":
+                    {
+                        if (op == "convert_ns")
+                        {
+                            string input = txtInput1.Text;
+                            int fromB = int.Parse(cmbFromBase.SelectedItem.ToString());
+                            int toB = int.Parse(cmbToBase.SelectedItem.ToString());
+                    
+                            resultStr = NumberSystemConverter.Convert(input, fromB, toB);
+                        }
+                        lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
+                        Logger.Log(txtInput1.Text, op, txtInput2.Text, resultStr);
+                        return;     
+                    }
+    
                     case "Выражения со скобками":
                     {
                         if (op == "eval_expr")
