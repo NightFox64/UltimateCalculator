@@ -1,1 +1,1 @@
-![alt text](<\image\Rance01.png>)
+![alt text](image/Rance01.png)
