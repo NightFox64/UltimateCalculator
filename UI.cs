@@ -27,6 +27,9 @@ namespace ComplexCalculator
         private ComboBox cmbFromBase, cmbToBase;
         private Label lblFrom, lblTo;
         private Button btnConvertNS;
+        private TextBox txtInput4;
+        private Label lblLogBase1, lblLogBase2, lblArg1, lblArg2;
+        private Button btnPowerLog, btnChangeBase;
 
         public CalculatorForm()
         {
@@ -107,6 +110,23 @@ namespace ComplexCalculator
                 lblResult.Text = "Введите число в первое поле\nи выберите системы счисления";
             }
 
+            bool isLog = (mode == "Логарифмы");
+
+            // Управляем всеми полями
+            lblArg1.Visible = isLog;
+            lblLogBase1.Visible = isLog;
+            lblArg2.Visible = isLog || isQuadratic; // lblArg2 используем как lblC для уравнений
+            lblLogBase2.Visible = isLog;
+            txtInput3.Visible = isLog || isQuadratic;
+            txtInput4.Visible = isLog;
+            btnPowerLog.Visible = isLog;
+            btnChangeBase.Visible = isLog;
+            
+            if (isLog) {
+                btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = true;
+                lblResult.Text = "Поля: 1-Арг1, 2-Осн1, 3-Арг2/Параметр, 4-Осн2";
+            }
+
             lblResult.Text = "Результат: ";
         }
         private void InitializeComponent()
@@ -115,7 +135,7 @@ namespace ComplexCalculator
 
             // Метка результата
             lblResult = new Label { 
-                Location = new Point(20, 160), 
+                Location = new Point(20, 200), 
                 Width = 340, 
                 Height = 80, 
                 Text = "Результат: ",
@@ -126,7 +146,7 @@ namespace ComplexCalculator
 
             // Выбор режима
             cmbMode = new ComboBox { Location = new Point(20, 5), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
-            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы", "Выражения со скобками", "Системы счисления" });
+            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы", "Выражения со скобками", "Системы счисления", "Логарифмы" });
             cmbMode.SelectedIndex = 0; // По умолчанию первый вариант
             this.Controls.Add(cmbMode);
 
@@ -138,40 +158,49 @@ namespace ComplexCalculator
             txtInput1 = new TextBox { Location = new Point(30, 40), Width = 330 };
             txtInput2 = new TextBox { Location = new Point(30, 80), Width = 330 };
             txtInput3 = new TextBox { Location = new Point(30, 120), Width = 330 };
+            txtInput4 = new TextBox { Location = new Point(30, 160), Width = 330, Visible = false };
 
             lblA = new Label { Text = "a:", Location = new Point(5, 43), Width = 15 };
             lblB = new Label { Text = "b:", Location = new Point(5, 83), Width = 15 };
             lblC = new Label { Text = "c:", Location = new Point(5, 123), Width = 15 };
 
+            // Подписи для логарифмов
+            lblArg1 = new Label { Text = "Арг1:", Location = new Point(360, 43), Width = 80, Visible = false };
+            lblLogBase1 = new Label { Text = "Осн1:", Location = new Point(360, 83), Width = 80, Visible = false };
+            lblArg2 = new Label { Text = "Арг.2 / Степень / Нов.Осн:", Location = new Point(360, 123), Width = 150, Visible = false };
+            lblLogBase2 = new Label { Text = "Осн2:", Location = new Point(360, 163), Width = 80, Visible = false };
+
             // Кнопки операций
-            btnAdd = new Button { Text = "+", Location = new Point(20, 250), Width = 75 };
-            btnSub = new Button { Text = "-", Location = new Point(105, 250), Width = 75 };
-            btnMul = new Button { Text = "*", Location = new Point(190, 250), Width = 75 };
-            btnDiv = new Button { Text = "/", Location = new Point(275, 250), Width = 75 };
-            btnFlip = new Button { Text = "1/x (Flip)", Location = new Point(20, 280), Width = 75 };
-            btnNegate = new Button { Text = "+/-", Location = new Point(110, 280), Width = 75 };
-            btnPower = new Button { Text = "В степень", Location = new Point(20, 310), Width = 85 };
-            btnConvert = new Button { Text = "Сменить форму", Location = new Point(110, 310), Width = 100 };
-            btnSolve = new Button { Text = "Найти корни", Location = new Point(230, 310), Width = 100 };
-            btnTrig = new Button { Text = "Sin/Cos/Tan", Location = new Point(20, 380), Width = 160, Visible = false };
-            btnCalculateExpr = new Button { Text = "Вычислить выражение", Location = new Point(20, 380), Width = 180, Visible = false };
-            btnConvertNS = new Button { Text = "Перевести", Location = new Point(20, 380), Width = 160, Visible = false };
+            btnAdd = new Button { Text = "+", Location = new Point(20, 290), Width = 75 };
+            btnSub = new Button { Text = "-", Location = new Point(105, 290), Width = 75 };
+            btnMul = new Button { Text = "*", Location = new Point(190, 290), Width = 75 };
+            btnDiv = new Button { Text = "/", Location = new Point(275, 290), Width = 75 };
+            btnFlip = new Button { Text = "1/x (Flip)", Location = new Point(20, 320), Width = 75 };
+            btnNegate = new Button { Text = "+/-", Location = new Point(110, 320), Width = 75 };
+            btnPower = new Button { Text = "В степень", Location = new Point(20, 350), Width = 85 };
+            btnConvert = new Button { Text = "Сменить форму", Location = new Point(110, 350), Width = 100 };
+            btnSolve = new Button { Text = "Найти корни", Location = new Point(230, 350), Width = 100 };
+            btnTrig = new Button { Text = "Sin/Cos/Tan", Location = new Point(20, 420), Width = 160, Visible = false };
+            btnCalculateExpr = new Button { Text = "Вычислить выражение", Location = new Point(20, 420), Width = 180, Visible = false };
+            btnConvertNS = new Button { Text = "Перевести", Location = new Point(20, 420), Width = 160, Visible = false };
+            btnPowerLog = new Button { Text = "В степень", Location = new Point(20, 420), Width = 100, Visible = false };
+            btnChangeBase = new Button { Text = "Сменить осн.", Location = new Point(130, 420), Width = 100, Visible = false };
 
             // Кнопки управления
-            btnClear = new Button { Text = "Сброс", Location = new Point(20, 410), Width = 160 };
-            btnShowLog = new Button { Text = "Протокол (Лог)", Location = new Point(190, 410), Width = 160 };
+            btnClear = new Button { Text = "Сброс", Location = new Point(20, 460), Width = 160 };
+            btnShowLog = new Button { Text = "Протокол (Лог)", Location = new Point(190, 460), Width = 160 };
 
-            txtPower = new TextBox { Location = new Point(280, 280), Width = 40 };
-            Label lblP = new Label { Text = "Степень:", Location = new Point(210, 285), Width = 70 };
+            txtPower = new TextBox { Location = new Point(280, 320), Width = 40 };
+            Label lblP = new Label { Text = "Степень:", Location = new Point(210, 325), Width = 70 };
 
-            cmbComplexForm = new ComboBox { Location = new Point(20, 350), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
+            cmbComplexForm = new ComboBox { Location = new Point(20, 390), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
             cmbComplexForm.Items.AddRange(new string[] { "Алгебраическая", "Тригонометрическая", "Экспоненциальная" });
             cmbComplexForm.SelectedIndex = 0;
 
-            lblFrom = new Label { Text = "Из системы:", Location = new Point(20, 115), Width = 100, Visible = false };
-            cmbFromBase = new ComboBox { Location = new Point(120, 122), Width = 60, DropDownStyle = ComboBoxStyle.DropDownList, Visible = false };
-            lblTo = new Label { Text = "В систему:", Location = new Point(200, 115), Width = 100, Visible = false };
-            cmbToBase = new ComboBox { Location = new Point(300, 122), Width = 60, DropDownStyle = ComboBoxStyle.DropDownList, Visible = false };
+            lblFrom = new Label { Text = "Из системы:", Location = new Point(20, 155), Width = 100, Visible = false };
+            cmbFromBase = new ComboBox { Location = new Point(120, 162), Width = 60, DropDownStyle = ComboBoxStyle.DropDownList, Visible = false };
+            lblTo = new Label { Text = "В систему:", Location = new Point(200, 155), Width = 100, Visible = false };
+            cmbToBase = new ComboBox { Location = new Point(300, 162), Width = 60, DropDownStyle = ComboBoxStyle.DropDownList, Visible = false };
             var bases = new object[] { 2, 3, 8, 9, 10, 16 };
             cmbFromBase.Items.AddRange(bases);
             cmbToBase.Items.AddRange(bases);
@@ -193,6 +222,8 @@ namespace ComplexCalculator
             btnTrig.Click += (s, e) => ExecuteOperation("trig");
             btnCalculateExpr.Click += (s, e) => ExecuteOperation("eval_expr");
             btnConvertNS.Click += (s, e) => ExecuteOperation("convert_ns");
+            btnPowerLog.Click += (s, e) => ExecuteOperation("log_pow");
+            btnChangeBase.Click += (s, e) => ExecuteOperation("log_base");
 
 
             // ПОДПИСЫВАЕМСЯ НА СОБЫТИЕ СМЕНЫ ВЫБОРА
@@ -228,6 +259,13 @@ namespace ComplexCalculator
             this.Controls.Add(lblTo);
             this.Controls.Add(cmbToBase);
             this.Controls.Add(btnConvertNS);
+            this.Controls.Add(lblArg1);
+            this.Controls.Add(lblLogBase1);
+            this.Controls.Add(lblArg2);
+            this.Controls.Add(lblLogBase2);
+            this.Controls.Add(txtInput4);
+            this.Controls.Add(btnPowerLog);
+            this.Controls.Add(btnChangeBase);
         }
 
         private void ExecuteFractionAction(string action)
@@ -257,6 +295,40 @@ namespace ComplexCalculator
 
                 switch (mode)
                 {
+                    case "Логарифмы":
+                    {
+                        var log1 = new LogNumber(double.Parse(txtInput1.Text), double.Parse(txtInput2.Text));
+    
+                        if (op == "log_pow") {
+                            double p = double.Parse(txtInput3.Text);
+                            double val = Math.Pow(log1.GetValue(), p);
+                            resultStr = $"({log1.ToString()})^{p} = {val:F4}";
+                        }
+                        else if (op == "log_base") {
+                            double newB = double.Parse(txtInput3.Text);
+                            var newLog = log1.ChangeBase(newB);
+                            resultStr = $"Переход к основанию {newB}:\n{newLog.ToString()}";
+                        }
+                        else {
+                            // Арифметика между двумя логарифмами
+                            var log2 = new LogNumber(double.Parse(txtInput3.Text), double.Parse(txtInput4.Text));
+                            double v1 = log1.GetValue();
+                            double v2 = log2.GetValue();
+                            double res = 0;
+
+                            switch (op) {
+                                case "+": res = v1 + v2; break;
+                                case "-": res = v1 - v2; break;
+                                case "*": res = v1 * v2; break;
+                                case "/": res = v1 / v2; break;
+                            }
+                            resultStr = $"{v1:F4} {op} {v2:F4} = {res:F4}";
+                        }
+                        lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
+                        Logger.Log(txtInput1.Text, op, txtInput2.Text, resultStr);
+                        return;
+                    }
+    
                     case "Системы счисления":
                     {
                         if (op == "convert_ns")
