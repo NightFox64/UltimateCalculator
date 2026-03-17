@@ -36,6 +36,7 @@ namespace ComplexCalculator
         private Button btnFindRoot;
         private ComboBox cmbTimeUnit; // Выбор: Часы, Минуты, Секунды
         private Button btnTimeToFull; // Кнопка перевода в формат Ч:М:С
+        private Button btnMod, btnToDecimal, btnToRoman;
 
         public CalculatorForm()
         {
@@ -174,6 +175,14 @@ namespace ComplexCalculator
                 btnMul.Enabled = btnDiv.Enabled = false;
             }
 
+            bool isRoman = (mode == "Римские цифры");
+            btnMod.Visible = btnToDecimal.Visible = btnToRoman.Visible = isRoman;
+
+            if (isRoman) {
+                btnAdd.Enabled = btnSub.Enabled = btnMul.Enabled = btnDiv.Enabled = true;
+                lblResult.Text = "Можно вводить римские (X, V) или арабские числа";
+            }
+
             lblResult.Text = "Результат: ";
         }
         private void InitializeComponent()
@@ -193,7 +202,7 @@ namespace ComplexCalculator
 
             // Выбор режима
             cmbMode = new ComboBox { Location = new Point(20, 5), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
-            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы", "Выражения со скобками", "Системы счисления", "Логарифмы", "Многочлены", "Система уравнений", "Поиск корней (f(x)=0)", "Интервалы времени" });
+            cmbMode.Items.AddRange(new string[] { "25-значные числа", "Десятичные дроби", "Комплексные числа", "Даты", "Обыкновенные дроби", "Квадратные уравнения", "Углы", "Выражения со скобками", "Системы счисления", "Логарифмы", "Многочлены", "Система уравнений", "Поиск корней (f(x)=0)", "Интервалы времени", "Римские цифры" });
             cmbMode.SelectedIndex = 0; // По умолчанию первый вариант
             this.Controls.Add(cmbMode);
 
@@ -236,6 +245,9 @@ namespace ComplexCalculator
             btnSolveSystem = new Button { Text = "Решить систему 3х3", Location = new Point(20, 420), Width = 180, Visible = false };
             btnFindRoot = new Button { Text = "Найти корень", Location = new Point(210, 420), Width = 120, Visible = false };
             btnTimeToFull = new Button { Text = "В полный формат", Location = new Point(120, 420), Width = 150, Visible = false };
+            btnMod = new Button { Text = "mod (%)", Location = new Point(240, 420), Width = 75, Visible = false };
+            btnToDecimal = new Button { Text = "В 10-тичную", Location = new Point(20, 420), Width = 100, Visible = false };
+            btnToRoman = new Button { Text = "В Римскую", Location = new Point(130, 420), Width = 100, Visible = false };
 
             // Кнопки управления
             btnClear = new Button { Text = "Сброс", Location = new Point(20, 460), Width = 160 };
@@ -287,6 +299,9 @@ namespace ComplexCalculator
             btnSolveSystem.Click += (s, e) => ExecuteOperation("solve_system");
             btnFindRoot.Click += (s, e) => ExecuteOperation("find_root");
             btnTimeToFull.Click += (s, e) => ExecuteOperation("time_to_full");
+            btnMod.Click += (s, e) => ExecuteOperation("%");
+            btnToDecimal.Click += (s, e) => ExecuteOperation("to_dec");
+            btnToRoman.Click += (s, e) => ExecuteOperation("to_rom");
 
 
             // ПОДПИСЫВАЕМСЯ НА СОБЫТИЕ СМЕНЫ ВЫБОРА
@@ -335,6 +350,9 @@ namespace ComplexCalculator
             this.Controls.Add(btnFindRoot);
             this.Controls.Add(cmbTimeUnit);
             this.Controls.Add(btnTimeToFull);
+            this.Controls.Add(btnMod);
+            this.Controls.Add(btnToDecimal);
+            this.Controls.Add(btnToRoman);
         }
 
         private void ExecuteFractionAction(string action)
@@ -364,6 +382,44 @@ namespace ComplexCalculator
 
                 switch (mode)
                 {
+                    case "Римские цифры":
+                    {
+                        if (op == "to_dec")
+                        {
+                            int val = RomanNumber.RomanToDecimal(txtInput1.Text);
+                            resultStr = $"Десятичное значение: {val}";
+                        }
+                        else if (op == "to_rom")
+                        {
+                            if (int.TryParse(txtInput1.Text, out int val))
+                            {
+                                resultStr = $"Римское значение: {RomanNumber.DecimalToRoman(val)}";
+                            }
+                        }
+                        else
+                        {
+                            // Парсим ввод (можно вводить и римские, и обычные числа)
+                            int v1 = int.TryParse(txtInput1.Text, out int n1) ? n1 : RomanNumber.RomanToDecimal(txtInput1.Text);
+                            int v2 = int.TryParse(txtInput2.Text, out int n2) ? n2 : RomanNumber.RomanToDecimal(txtInput2.Text);
+                            int resVal = 0;
+                            switch (op)
+                            {
+                                case "+": resVal = v1 + v2; break;
+                                case "-": resVal = v1 - v2; break;
+                                case "*": resVal = v1 * v2; break;
+                                case "/": 
+                                    int div = v1 / v2;
+                                    int rem = v1 % v2;
+                                    resultStr = $"Целое: {RomanNumber.DecimalToRoman(div)} ({div})\nОстаток: {RomanNumber.DecimalToRoman(rem)} ({rem})";
+                                    break;
+                            }
+                            if (op != "/") resultStr = RomanNumber.DecimalToRoman(resVal) + $" ({resVal})";
+                        }
+                        lblResult.Text = "Результат (" + mode + "):\n" + resultStr;
+                        Logger.Log(txtInput1.Text, op, txtInput2.Text, resultStr);
+                        return;
+                    }
+    
                     case "Интервалы времени":
                     {
                         string unit = cmbTimeUnit.Text;
